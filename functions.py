@@ -1,10 +1,12 @@
 def login(driver, username, password):
     #Login to researchgate
-
+    import os
+    from dotenv import load_dotenv
     from selenium.webdriver.common.by import By
     from selenium.webdriver.common.keys import Keys
 
-    #driver.find_element(By.CLASS_NAME, 'nav__button-secondary').click()  # Clicks on Login
+    load_dotenv()
+    driver.get(os.getenv('RG_LOGIN'))
     driver.find_element(By.ID, 'input-login').send_keys(username)  # Fills username
     driver.find_element(By.ID, 'input-password').send_keys(password, Keys.ENTER)    # Enters password and logs in
 
@@ -45,11 +47,12 @@ def ResearchGateLinkGenerator(name, researcher=False, just_uni=False):
 
     """
 
+    underscore = name.replace(' ', '_')
+
     if just_uni == True:
-        underscore = name.replace(' ', '_')
         return underscore
 
-    if just_uni == False:
+    else:
         if researcher:
             link = f'https://www.researchgate.net/profile/{underscore}'
         if not researcher:
@@ -57,8 +60,6 @@ def ResearchGateLinkGenerator(name, researcher=False, just_uni=False):
 
         # noinspection PyUnboundLocalVariable
         return link
-
-
 
 def LogMemberNumber(driver, university):
 
@@ -82,6 +83,11 @@ def LogMemberNumber(driver, university):
 
 
 def AppendUniList(country):
+
+
+    # note to self, remove special characters and apostrophes
+
+
     import pandas as pd
     import os
     from dotenv import load_dotenv
@@ -95,10 +101,43 @@ def AppendUniList(country):
     try:
         country_specific_uni = full_unis.loc[full_unis['iso2'] == f'{iso2_country}']
         for i in country_specific_uni['university']:
-            formatted_university = ResearchGateLinkGenerator(just_uni=True, name=i)
-            sql = "INSERT INTO universities (institution) VALUE (%s)"
-            cursor.execute(sql, (formatted_university,))
-            mydb.commit()
-            return 1
+            ascii = LatinLetters(i)
+            if ascii is True:
+                formatted_university = ResearchGateLinkGenerator(just_uni=True, name=i)
+                link = ResearchGateLinkGenerator(name=i)
+                sql = "INSERT INTO universities (institution, link, iso2) VALUE (%s, %s, %s)"
+                cursor.execute(sql, (formatted_university, link, iso2_country,))
+                mydb.commit()
+                return True
+            else:
+                pass # handle exception if it is not ascii
     except Exception as e:
-        return 0
+        return e
+
+def LogProfiles(driver, university):
+    from selenium import webdriver
+    from selenium.webdriver.common.by import By
+
+    cursor, mydb = db_auth()
+    profile = driver.find_elements(By.CLASS_NAME, 'institution-members-list')
+
+    for x in profile:
+        try:
+            link = x.find_element(By.CLASS_NAME, 'nova-legacy-e-link--theme-bare').get_attribute('href')
+            print(link)
+            sql = f'INSERT INTO profiles VALUES (%s, %s)'
+            cursor.execute(sql, (university, link,))
+            mydb.commit()
+            return 'success'
+
+        except Exception as e:
+            if e.__class__.__name__ == 'IntegrityError':
+                pass
+            else:
+                return e
+
+def LatinLetters(str):
+    import string
+
+    char_set = string.ascii_letters + "',._"
+    return all([True if x in char_set else False for x in str])
