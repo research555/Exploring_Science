@@ -144,7 +144,7 @@ def LatinLetters(str):
 def GetPublications(profile):
     # get publications profile/name/research db testpub
     # spinner for profiles with research but need to scroll to see more
-    #
+
     from selenium import webdriver
     from selenium.webdriver.common.by import By
     import os

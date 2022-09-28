@@ -61,6 +61,7 @@ for elements in heading:
 
 
 """
+
 sql = 'SELECT link from profiles'
     cursor.execute(sql)
     profiles = cursor.fetchall()
