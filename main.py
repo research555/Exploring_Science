@@ -19,10 +19,15 @@ MAKE A LIST OF ALL UNIVERSITIES
 
 2. NAVIAGTE TO INSTITUTIONS DIRECTORY
 
+GATHERING PUBLICATIONS
+
+1. I think the best way to do it would be to append all values to a string with delimiter '%%%' in sql
+then use split.delimiter('%%%') to listify it when retrieving for NLP 
+
 """
 
 # # # # Load Important Things # # # #
-
+a = [1, 2, ]
 cursor, mydb = db_auth()
 username = os.getenv('RG_USER')
 password = os.getenv('RG_PASSWORD')
@@ -55,7 +60,14 @@ for elements in heading:
 
 
 
-
+"""
+sql = 'SELECT link from profiles'
+    cursor.execute(sql)
+    profiles = cursor.fetchall()
+    for profile in profiles:
+        profile = profile[0]
+        RUN PUBLICATION SCRAPER FUNC
+"""
                 # scrape one link put into database DONE
                 # scrape xp and education into database
                 # repeat 1 million times

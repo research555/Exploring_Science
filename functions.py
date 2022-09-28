@@ -34,7 +34,7 @@ def db_auth():
         database=DB_DATABASE
     )
 
-    cursor = mydb.cursor()  # Name the cursor something simple for easier use
+    cursor = mydb.cursor(buffered=True)  # Name the cursor something simple for easier use
 
     return cursor, mydb
 
@@ -124,11 +124,10 @@ def LogProfiles(driver, university):
     for x in profile:
         try:
             link = x.find_element(By.CLASS_NAME, 'nova-legacy-e-link--theme-bare').get_attribute('href')
-            print(link)
             sql = f'INSERT INTO profiles VALUES (%s, %s)'
             cursor.execute(sql, (university, link,))
             mydb.commit()
-            return 'success'
+
 
         except Exception as e:
             if e.__class__.__name__ == 'IntegrityError':
@@ -140,4 +139,49 @@ def LatinLetters(str):
     import string
 
     char_set = string.ascii_letters + "',._"
-    return all([True if x in char_set else False for x in str])
+    return all([True if x in char_set else False for x in str])  #returns true if all letters are latin (a-z)
+
+def GetPublications(profile):
+    # get publications profile/name/research db testpub
+    # spinner for profiles with research but need to scroll to see more
+    #
+    from selenium import webdriver
+    from selenium.webdriver.common.by import By
+    import os
+    from dotenv import load_dotenv
+    import regex as re
+    import time
+    import math
+
+    cursor, mydb = db_auth()
+    username = os.getenv('RG_USER')
+    password = os.getenv('RG_PASSWORD')
+    driver = webdriver.Edge(executable_path='C:/Users/imran/PycharmProjects/Exploring_Science/Driver/msedgedriver.exe')
+    login(driver=driver, username=username, password=password)
+    pub_names = []
+    pub_links = []
+    research_link = profile + '/research'
+    driver.get(research_link)
+    driver.find_element(By.CLASS_NAME, 'nova-legacy-c-nav__item')
+    number_articles = driver.find_element(By.CLASS_NAME, 'is-selected')  # finds article number
+    number_articles = re.findall('[0-9]+', number_articles.text)
+    if bool(number_articles) == True:
+        # author has publications
+        number_scrolls = math.ceil(int(number_articles[0]) / 10) + 3
+        for i in range(number_scrolls):
+            driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")  # scrolls to bottom
+            time.sleep(1.5)
+        pub_class = driver.find_elements(By.CLASS_NAME, 'nova-legacy-v-publication-item__title')
+        for i in pub_class:
+            pub_names.append(i.text)  # finds publication name NOTE, INCLUDE HREF
+            pub_links.append(i.get_attribute('href'))
+
+        pub_names = '%%%'.join(pub_names)
+        pub_links = '&&&'.join(pub_links)
+        sql = "UPDATE profiles SET pub_names = %s, pub_links = %s WHERE link = %s"
+        cursor.execute(sql, (pub_names, pub_links, profile,))
+        mydb.commit()
+
+    else:
+        # author has no publications
+        pass
