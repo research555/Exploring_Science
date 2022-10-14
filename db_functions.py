@@ -1,6 +1,11 @@
-from functions import db_auth
+from functions import DbAuth
 
-cursor, mydb = db_auth()
-def UpdateSetWhere(table, column, where):
-
-    sql = 'UPDATE %s SET %s WHERE %s' # fix
+cursor, mydb = DbAuth()
+def SetSuccess(success: int, university):
+    sql = 'UPDATE universities SET success = %s WHERE institution = %s'
+    cursor.execute(sql, (success, university,))
+    mydb.commit()
+def SetTried(tried: int, university):
+    sql = 'UPDATE universities SET tried = %s WHERE institution = %s'
+    cursor.execute(sql, (tried, university,))
+    mydb.commit()

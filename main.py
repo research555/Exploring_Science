@@ -9,6 +9,8 @@ import pandas as pd
 import time
 import regex
 import math
+from pdb import set_trace
+from exceptions import *
 
 
 """
@@ -22,45 +24,73 @@ MAKE A LIST OF ALL UNIVERSITIES
 GATHERING PUBLICATIONS
 
 1. I think the best way to do it would be to append all values to a string with delimiter '%%%' in sql
-then use split.delimiter('%%%') to listify it when retrieving for NLP 
+then use split.delimiter('%%%') to listify it when retrieving for NLP, links are separated with &&&
 
+2. DO NOT LOG IN!! all details are given if youre not logged in for some reason.
 """
 
 # # # # Load Important Things # # # #
-a = [1, 2, ]
-cursor, mydb = db_auth()
+cursor, mydb = DbAuth()
 username = os.getenv('RG_USER')
 password = os.getenv('RG_PASSWORD')
-driver = webdriver.Edge(executable_path='C:/Users/imran/PycharmProjects/Exploring_Science/Driver/msedgedriver.exe')
 
 # # # # Log Into ResearchGate # # # #
 
-login(driver=driver, username=username, password=password)
+#Login()
 
-university = 'University-of-Bergen'
-driver.get(f'https://www.researchgate.net/institution/{university}/members')
-heading = driver.find_elements(By.CLASS_NAME, 'nova-legacy-c-nav__item-label') # finds navbar with member number
+# # # # Cycle through universities on db and find their member numbers and if the links work # # # #
+set_trace()
 
-for elements in heading:
-    text = elements.text.lower()
-    if 'members' in text:
-        number_members = regex.findall(r'[0-9]', text)
-        number_members = int(''.join(number_members)) # remove commas
-        num_pages = math.ceil(number_members/10)  # 10 profiles per page
+sql = "SELECT institution, link, tried, members_link FROM universities WHERE tried = 0"
+cursor.execute(sql)
+universities = cursor.fetchall()
 
-        iter = 1
-        for pages in range(num_pages):
-            driver.get(f'https://www.researchgate.net/institution/{university}/members/{pages}')
-            profile = driver.find_elements(By.CLASS_NAME, 'institution-members-list')
-            for x in profile:
-                link = x.find_element(By.CLASS_NAME, 'nova-legacy-e-link--theme-bare').get_attribute('href')
-                print(f'loop {iter}')
-                LogProfiles(driver=driver, university=university)
-                iter += 1
+for row in universities:
+    university, link, tried, members_link = row[0], row[1], row[2], row[3]
+    if tried == 0:
+        driver.get(members_link)
+        current_url = driver.current_url
+        time.sleep(2)
+        try:
+            if current_url == members_link:
+                sql = "UPDATE universities SET tried = 1 WHERE members_link = %s"
+                cursor.execute(sql, (members_link,))
+                #mydb.commit()
+                time.sleep(2)
+                heading = driver.find_elements(By.CLASS_NAME,
+                                               'nova-legacy-c-nav__item-label')  # finds navbar with member number
+                sql = "UPDATE universities SET success = 1 WHERE members_link = %s"
+                cursor.execute(sql, (members_link,))
+                # mydb.commit()
+                num_pages, member_number = GetPageAndMemberNumber(login=False, university=university)
+                print(f'added member number: ({member_number}) for {university} on universities db')
+
+            else:
+                raise UniversityLinkDoesNotExist
+
+        except Exception as e:
+            if UniversityLinkDoesNotExist:
+                pass
+
+
+
 
 
 
 """
+
+sql = 'SELECT link FROM profiles WHERE pub_scraped = 0'
+cursor.execute(sql)
+profile_links = cursor.fetchall()
+for link in profile_links:
+    link = link[0]
+    number_articles = HasPublications(public=True)
+    pub_number, pub_names, pub_links = GetPublications(public=False, number_articles=number_articles)
+    sql = "UPDATE profiles SET pub_names = %s, pub_links = %s, pub_number = %s, pub_scraped = 1 WHERE link = %s"
+    cursor.execute(sql, (pub_names, pub_links, pub_number, link,))
+    mydb.commit()
+
+
 
 sql = 'SELECT link from profiles'
     cursor.execute(sql)
