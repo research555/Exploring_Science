@@ -7,6 +7,8 @@ import regex as re
 
 # list size max 100 for some reason..
 # function doesnt work for get pubs
+# some pubs are hidden and wont be scraped
+# 2 seconds per profile currently, 2 min per 100
 
 cursor, mydb = DbAuth()
 sql = 'SELECT link FROM profiles WHERE pub_scraped = 0'

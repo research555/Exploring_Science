@@ -15,6 +15,7 @@ import random
 
 
 # turn into class
+
 load_dotenv()
 driver = webdriver.Edge(executable_path=os.getenv('EDGE_WEBDRIVER_PATH'))
 
