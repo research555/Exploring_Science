@@ -30,10 +30,24 @@ def DbAuth():
 cursor, mydb = DbAuth()
 
 
+def ReorganizeSQL(CREATE, LIKE, LIMIT, amount_tables):
+    for table_number in range(1, amount_tables + 1):
+        sql = f'CREATE TABLE {CREATE}{table_number} LIKE {LIKE}'
+        cursor.execute(sql)  # makes new tables
+        mydb.commit()
+        sql = f'INSERT INTO {CREATE}{table_number} SELECT * FROM {LIKE} LIMIT {LIMIT}'
+        cursor.execute(sql)  # inserts 50k into new table
+        mydb.commit()
+        sql = f'DELETE FROM {LIKE} LIMIT 50000'
+        cursor.execute(sql)
+        mydb.commit()
+
+
 def SetSuccess(success: int, university):
     sql = 'UPDATE universities SET success = %s WHERE institution = %s'
     cursor.execute(sql, (success, university,))
     mydb.commit()
+
 def SetTried(tried: int, university):
     sql = 'UPDATE universities SET tried = %s WHERE institution = %s'
     cursor.execute(sql, (tried, university,))

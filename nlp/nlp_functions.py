@@ -3,7 +3,7 @@ from db_functions import DbAuth
 
 cursor, mydb = DbAuth()
 
-def AppendTrainingPubs(path):
+def AppendTrainingPubs(path, table_number):
     # Appends pubs from json file to db
 
     with open(path, 'r') as f:
@@ -12,7 +12,7 @@ def AppendTrainingPubs(path):
                 id = data['id']
                 title = data['title']
                 category = data['categories']
-                sql = 'INSERT INTO training_pubs VALUES (%s, %s, %s)'
+                sql = f'INSERT INTO training_pubs{table_number} VALUES (%s, %s, %s)'
                 cursor.execute(sql, (id, category, title,))
                 mydb.commit()
 

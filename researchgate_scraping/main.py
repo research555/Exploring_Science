@@ -39,7 +39,6 @@ password = os.getenv('RG_PASSWORD')
 #Login()
 
 # # # # Cycle through universities on db and find their member numbers and if the links work # # # #
-set_trace()
 
 sql = "SELECT institution, link, tried, members_link FROM universities WHERE tried = 0"
 cursor.execute(sql)
