@@ -1,3 +1,4 @@
+import random
 import time
 from functions import *
 import pdb
@@ -40,18 +41,22 @@ for link in profile_links:
                     mydb.commit()
                     i += 1
                     print(f'{pub_number} articles appended into {link}')
+                    time.sleep(random.randint(1,3))
+                    # FIXME: For some reason it goes to the else statement as well and records pubs as zero
+                    break
             else:
                 sql = 'UPDATE profiles SET pub_number = 0, pub_scraped = 1 WHERE link = %s'
                 cursor.execute(sql, (link,))
                 mydb.commit()
                 i += 1
                 print('no publications')
-                time.sleep(1)
+                time.sleep(random.randint(1,3))
 
     else:
         sql = 'UPDATE profiles SET public_profile = 0 WHERE link = %s'
         cursor.execute(sql, (link,))
         mydb.commit()
         print('not public')
+        time.sleep(random.randint(1,3))
         i += 1
 
