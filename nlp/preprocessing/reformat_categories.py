@@ -1,7 +1,7 @@
 import pdb
 
 from db_functions import DbAuth
-from nlp_functions import *
+from preprocessing_functions import *
 
 """
 
@@ -16,7 +16,7 @@ Decided to be lazy and just parse line by line
 
 
 cursor, mydb = DbAuth()
-path = r'../datasets/arxiv-metadata-oai-snapshot.json'
+path = r'../../datasets/arxiv-metadata-oai-snapshot.json'
 
 # dict_keys(['id', 'submitter', 'authors', 'title', 'comments', 'journal-ref',
 # 'doi', 'report-no', 'categories', 'license', 'abstract', 'versions', 'update_date', 'authors_parsed'])
@@ -26,7 +26,7 @@ topics = {
     'biology': ['q-bio'],
     'math': ['math', 'stat'],
     'economics': ['econ', 'q-fin'],
-    'cs': ['CoRR'],
+    'cs': ['CoRR', 'cs'],
     'unknown': ['unknown']
 }
 

@@ -1,3 +1,5 @@
+import pdb
+
 import regex as re
 import math
 import string
@@ -134,28 +136,44 @@ def AppendUniList(country):
 
 
 def LatinLetters(str):
+    # returns true if all letters are latin (a-z)
 
     char_set = string.ascii_letters + ' '
-    return all([True if x in char_set else False for x in str])  #returns true if all letters are latin (a-z)
+    return all([True if x in char_set else False for x in str])
 
-def GetPublications(public: bool, number_articles):
+def GetPublications(public: bool, number_articles, profile_link=None):
     # get publications profile/name/research db testpub
     # spinner for profiles with research but need to scroll to see more
+    # FIXME: Only appends 100 publications maximum for some reason
 
     pub_names = []
     pub_links = []
 
     if public is True:
-        pub_class = driver.find_elements(By.CLASS_NAME, 'nova-legacy-v-publication-item__title')
-        for publication in pub_class:
-            pub_link = publication.find_element(By.CLASS_NAME, 'nova-legacy-e-link')
-            link = pub_link.get_attribute('href')
-            pub_names.append(publication.text)  # finds publication name NOTE, INCLUDE HREF
-            pub_links.append(link)
+        if int(number_articles[0]) <= 100:
+            pub_class = driver.find_elements(By.CLASS_NAME, 'nova-legacy-v-publication-item__title')
+            for publication in pub_class:
+                pub_link = publication.find_element(By.CLASS_NAME, 'nova-legacy-e-link')
+                link = pub_link.get_attribute('href')
+                pub_names.append(publication.text)  # finds publication name NOTE, INCLUDE HREF
+                pub_links.append(link)
+        else:
+            #pdb.set_trace()
+            num_pages = math.ceil(int(number_articles[0]) / 100)
+            for i in range(1, num_pages + 1):
+                driver.get(f'{profile_link}/{i}')
+                pub_class = driver.find_elements(By.CLASS_NAME, 'nova-legacy-v-publication-item__title')
+                for publication in pub_class:  # Include href for good measure
+                    pub_link = publication.find_element(By.CLASS_NAME, 'nova-legacy-e-link')
+                    link = pub_link.get_attribute('href')
+                    pub_names.append(publication.text)
+                    pub_links.append(link)
+            #driver.get(profile_link)
         pub_names_str = '%%%'.join(pub_names)
         pub_links_str = '&&&'.join(pub_links)
 
         return len(pub_links), pub_names_str, pub_links_str
+
     else:
         number_scrolls = math.ceil(int(number_articles[0]) / 10) + 3
         for i in range(number_scrolls):

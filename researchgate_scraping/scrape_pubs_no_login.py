@@ -12,7 +12,7 @@ import regex as re
 # 2 seconds per profile currently, 2 min per 100
 
 cursor, mydb = DbAuth()
-sql = 'SELECT link FROM profiles WHERE pub_scraped = 0'
+sql = 'SELECT link FROM profiles WHERE institution = "Universidad_de_Buenos_Aires" AND pub_scraped = 0'
 cursor.execute(sql)
 profile_links = cursor.fetchall()
 i = 1
@@ -28,6 +28,7 @@ for link in profile_links:
     link = link[0]
     driver.get(link)
     public = IsPublic(link)
+    time.sleep(random.randint(3,8))
     if public is True:
         sections = driver.find_elements(By.CLASS_NAME, 'nova-legacy-c-card__header')
         for section in sections:
@@ -35,28 +36,30 @@ for link in profile_links:
                 number_articles = re.findall('[0-9]+', section.text)
                 print(number_articles)
                 if bool(number_articles):
-                    pub_number, pub_names, pub_links = GetPublications(public=True, number_articles=number_articles)
+                    pub_number, pub_names, pub_links = GetPublications(public=True, number_articles=number_articles, profile_link=link)
                     sql = "UPDATE profiles SET pub_titles = %s, pub_links = %s, pub_number = %s, pub_scraped = 1 WHERE link = %s"
                     cursor.execute(sql, (pub_names, pub_links, pub_number, link,))
                     mydb.commit()
                     i += 1
                     print(f'{pub_number} articles appended into {link}')
-                    time.sleep(random.randint(1,3))
-                    # FIXME: For some reason it goes to the else statement as well and records pubs as zero
+                    #time.sleep(random.randint(3,8))
+                    #pdb.set_trace()
                     break
-            else:
-                sql = 'UPDATE profiles SET pub_number = 0, pub_scraped = 1 WHERE link = %s'
-                cursor.execute(sql, (link,))
-                mydb.commit()
-                i += 1
-                print('no publications')
-                time.sleep(random.randint(1,3))
 
+        """
+        sql = 'UPDATE profiles SET pub_number = 0, pub_scraped = 1 WHERE link = %s'
+        cursor.execute(sql, (link,))
+        mydb.commit()
+        i += 1
+        print('no publications')
+        #time.sleep(random.randint(3,8))
+        """
     else:
         sql = 'UPDATE profiles SET public_profile = 0 WHERE link = %s'
         cursor.execute(sql, (link,))
         mydb.commit()
         print('not public')
-        time.sleep(random.randint(1,3))
+        #time.sleep(random.randint(1,3))
         i += 1
+
 
